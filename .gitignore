@@ -1,4 +1,6 @@
-# .gitignore
 whale
 *.o
+*.deb
+Packages.gz
+whale_package/
 
