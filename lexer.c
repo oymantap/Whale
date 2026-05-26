@@ -10,13 +10,19 @@ void tokenize(char *line, Token tokens[], int *count) {
     while (*ptr) {
         if (isspace(*ptr)) { ptr++; continue; }
 
-        if (*ptr == '"') { // Handle String
-            ptr++;
+                if (*ptr == '"') {
+            ptr++; // Lewati tanda kutip pembuka
             tokens[*count].type = T_STRING;
             int i = 0;
-            while (*ptr && *ptr != '"') tokens[*count].value[i++] = *ptr++;
+            // Ambil karakter sampai ketemu tanda kutip penutup
+            while (*ptr && *ptr != '"' && i < 255) {
+                tokens[*count].value[i++] = *ptr++;
+            }
             tokens[*count].value[i] = '\0';
-            if (*ptr == '"') ptr++;
+            
+            // Jika ketemu tanda kutip penutup, majukan pointer
+            if (*ptr == '"') ptr++; 
+            
             (*count)++;
         }
         else if (*ptr == '=') { // Handle Assignment
@@ -31,18 +37,30 @@ void tokenize(char *line, Token tokens[], int *count) {
             ptr++;
             (*count)++;
         }
-                 else { // Handle Keywords/Identifiers
-            // --- BAGIAN INI UNTUK DETEKSI ERROR ---
-            if (!isalnum(*ptr) && *ptr != '_' && *ptr != '=' && *ptr != '+' && *ptr != '"') {
-                printf("Lexer Error: Karakter tidak dikenal '%c'\n", *ptr);
-                return; // Berhenti total jika ketemu simbol aneh
+        else if (*ptr == '-') { tokens[*count].type = T_MINUS; strcpy(tokens[*count].value, "-"); ptr++; (*count)++; }
+        else if (*ptr == '*') { tokens[*count].type = T_MULTIPLY; strcpy(tokens[*count].value, "*"); ptr++; (*count)++; }
+        else if (*ptr == '/') { tokens[*count].type = T_DIVIDE; strcpy(tokens[*count].value, "/"); ptr++; (*count)++; }
+        
+        else if (isdigit(*ptr)) { // Handle Number
+            tokens[*count].type = T_NUMBER;
+            int i = 0;
+            while (*ptr && isdigit(*ptr)) tokens[*count].value[i++] = *ptr++;
+            tokens[*count].value[i] = '\0';
+            (*count)++;
+        }
+        else { // Handle Keywords/Identifiers (PENTING: Harus ada 'else')
+            // Cek error di sini
+            if (!isalnum(*ptr) && *ptr != '_' && *ptr != '"') {
+                printf("Character Error: Unknown character '%c'\n", *ptr);
+                return;
             }
-            // --------------------------------------
 
             char buffer[64];
             int i = 0;
-            // Baca karakter sampai ketemu spasi atau operator
-            while (*ptr && !isspace(*ptr) && *ptr != '=' && *ptr != '+') buffer[i++] = *ptr++;
+            // Baca sampai spasi atau operator
+            while (*ptr && !isspace(*ptr) && *ptr != '=' && *ptr != '+' && *ptr != '-' && *ptr != '*' && *ptr != '/') {
+                buffer[i++] = *ptr++;
+            }
             buffer[i] = '\0';
 
             if (i > 0) {
@@ -54,7 +72,6 @@ void tokenize(char *line, Token tokens[], int *count) {
                 (*count)++;
             }
         }
-
     }
 }
 

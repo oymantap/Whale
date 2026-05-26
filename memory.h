@@ -2,8 +2,9 @@
 #define MEMORY_H
 
 typedef struct {
-    char name[50];
-    char value[100];
+    char name[64];
+    char value[256];
+    int is_number; // <--- TAMBAHKAN INI (0 = false, 1 = true)
 } Variable;
 
 void set_variable(char *name, char *value);
