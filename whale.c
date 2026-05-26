@@ -1,4 +1,6 @@
+// File: whale.c
 #include <stdio.h>
+#include <string.h>
 #include "whale.h"
 
 int main(int argc, char *argv[]) {
@@ -14,15 +16,20 @@ int main(int argc, char *argv[]) {
     }
 
     char line[256];
-    Token t;
+    Token tokens[10];
+    int count = 0;
 
     while (fgets(line, sizeof(line), file)) {
-        tokenize(line, &t);
-        if (t.type != T_EOF) {
-            execute(t);
+        // BERSIHKAN ARRAY TOKENS
+        memset(tokens, 0, sizeof(tokens)); 
+        
+        count = 0;
+        tokenize(line, tokens, &count);
+
+        if (count > 0) {
+            parse_and_execute(tokens, count);
         }
     }
     fclose(file);
     return 0;
 }
-

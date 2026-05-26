@@ -1,0 +1,8 @@
+Package: whale
+Version: 1.0
+Section: utils
+Priority: optional
+Architecture: aarch64
+Maintainer: Rycl <rycl@gmail.com>
+Description:  whale programming language.
+
