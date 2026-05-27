@@ -1,35 +1,16 @@
-// File: whale.c
 #include <stdio.h>
-#include <string.h>
+#include <stdlib.h>
 #include "whale.h"
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("Usage: whale <file.w>\n");
-        return 1;
-    }
-    
-    FILE *file = fopen(argv[1], "r");
-    if (!file) {
-        printf("File error!\n");
-        return 1;
-    }
-
-    char line[256];
-    Token tokens[10];
-    int count = 0;
-
-    while (fgets(line, sizeof(line), file)) {
-        // BERSIHKAN ARRAY TOKENS
-        memset(tokens, 0, sizeof(tokens)); 
-        
-        count = 0;
-        tokenize(line, tokens, &count);
-
-        if (count > 0) {
-            parse_and_execute(tokens, count);
-        }
-    }
-    fclose(file);
-    return 0;
+    if (argc < 2) return 1;
+    FILE *f = fopen(argv[1], "rb");
+    if (!f) return 1;
+    fseek(f, 0, SEEK_END); long size = ftell(f); fseek(f, 0, SEEK_SET);
+    char *buf = malloc(size + 1); fread(buf, 1, size, f); buf[size] = '\0'; fclose(f);
+    Token *tokens = malloc(sizeof(Token) * 1000); int count = 0;
+    tokenize(buf, tokens, &count);
+    parse_all(tokens, count);
+    free(buf); free(tokens); return 0;
 }
+

@@ -2,81 +2,51 @@
 #include "memory.h"
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdlib.h>
 
-// Helper to check if variable value is numeric
-int is_var_number(char *name) {
-    char *val = get_variable(name);
-    if (val == NULL) return 0;
-    for (int i = 0; val[i] != '\0'; i++) {
-        if (!isdigit(val[i])) return 0;
-    }
+int is_num(char *val) {
+    char *v = get_variable(val);
+    char *target = v ? v : val;
+    for(int i=0; target[i]; i++) if(target[i] < '0' || target[i] > '9') return 0;
     return 1;
 }
 
-// Perform calculation based on operator
-int calculate(int a, int b, TokenType op) {
-    switch (op) {
-        case T_PLUS:     return a + b;
-        case T_MINUS:    return a - b;
-        case T_MULTIPLY: return a * b;
-        case T_DIVIDE:   return (b != 0) ? a / b : 0;
-        default:         return 0;
-    }
-}
-
-void get_val(Token t, char *buffer) {
-    if (t.type == T_IDENTIFIER) {
-        char *val = get_variable(t.value);
-        if (val) strcpy(buffer, val);
-        else strcpy(buffer, t.value);
-    } 
-    else {
-        strcpy(buffer, t.value);
-    }
-}
-
-void parse_and_execute(Token tokens[], int count) {
-    if (count >= 3 && tokens[1].type == T_ASSIGN) {
-        set_variable(tokens[0].value, tokens[2].value);
-    }
-    else if (tokens[0].type == T_SAY) {
-        int sum = 0;
-        int is_math = 0;
-        char result[512] = "";
-
-        for (int i = 1; i < count; i += 2) {
-            char val[256];
-            get_val(tokens[i], val);
-            int current_val = atoi(val);
-
-            // Check if it's numeric
-            if (tokens[i].type == T_NUMBER || (tokens[i].type == T_IDENTIFIER && is_var_number(tokens[i].value))) {
-                if (i == 1) {
-                    sum = current_val;
-                    is_math = 1;
-                } else if (is_math) {
-                    sum = calculate(sum, current_val, tokens[i-1].type);
+void parse_all(Token tokens[], int count) {
+    int i = 0;
+    while (i < count) {
+        if (tokens[i].type == T_IDENTIFIER && i+1 < count && tokens[i+1].type == T_ASSIGN) {
+            set_variable(tokens[i].value, tokens[i+2].value);
+            i += 3;
+        } else if (tokens[i].type == T_SAY) {
+            i++;
+            while (i < count && tokens[i].type != T_EOF && tokens[i].type != T_SAY) {
+                // 1. Cek Matematika DULU (Prioritas tertinggi)
+                if (is_num(tokens[i].value) && i+1 < count && (tokens[i+1].type == T_PLUS || tokens[i+1].type == T_MULTIPLY)) {
+                    int v1 = atoi(get_variable(tokens[i].value) ? get_variable(tokens[i].value) : tokens[i].value);
+                    int op = tokens[i+1].type;
+                    int v2 = atoi(get_variable(tokens[i+2].value) ? get_variable(tokens[i+2].value) : tokens[i+2].value);
+                    
+                    // Cek lookahead untuk perkalian (a + b * c)
+                    if (i+3 < count && tokens[i+3].type == T_MULTIPLY) {
+                        int v3 = atoi(get_variable(tokens[i+4].value) ? get_variable(tokens[i+4].value) : tokens[i+4].value);
+                        printf("%d", v1 + (v2 * v3));
+                        i += 4;
+                    } else {
+                        printf("%d", (op == T_PLUS) ? (v1 + v2) : (v1 * v2));
+                        i += 2;
+                    }
+                } 
+                // 2. Cek String/Var (Hanya jika bukan angka/math)
+                else if (tokens[i].type == T_STRING || tokens[i].type == T_IDENTIFIER) {
+                    char *v = get_variable(tokens[i].value);
+                    if (v) printf("%s", v);
+                    else if (tokens[i].type != T_PLUS && tokens[i].type != T_MULTIPLY) 
+                        printf("%s", tokens[i].value);
                 }
-            } else {
-                is_math = 0;
-                strcat(result, val);
+                i++;
             }
-
-            // Error Handling: Expecting an operator after the value
-            if (i + 1 < count && tokens[i+1].type != T_PLUS && tokens[i+1].type != T_MINUS && 
-                tokens[i+1].type != T_MULTIPLY && tokens[i+1].type != T_DIVIDE) {
-                printf("Parser Error: Expected operator, found '%s'\n", tokens[i+1].value);
-                return;
-            }
-        }
-
-        if (is_math) {
-            printf("%d\n", sum);
-        } else {
-            printf("%s\n", result);
-        }
+            printf("\n");
+        } else i++;
     }
 }
 

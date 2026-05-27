@@ -1,7 +1,5 @@
-frist = 2
-last = 4
-say frist
-say "*"
-say last
-say frist * last
-say "math is very easy 😏"
+a = 5
+b = 10
+c = 2
+
+say a + b * c
